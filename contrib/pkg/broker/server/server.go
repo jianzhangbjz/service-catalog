@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	ubroker "github.com/kubernetes-incubator/service-catalog/contrib/cmd/options"
 	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/broker/controller"
 	"github.com/kubernetes-incubator/service-catalog/contrib/pkg/brokerapi"
 	"github.com/kubernetes-incubator/service-catalog/pkg/util"
@@ -150,10 +151,20 @@ func (s *server) createServiceInstance(w http.ResponseWriter, r *http.Request) {
 		req.Parameters = make(map[string]interface{})
 	}
 
+	response := ubroker.Options.Provision
+	glog.Warning("(ignore)createServiceInstance operation, the fake status code is: ", response)
 	if result, err := s.controller.CreateServiceInstance(id, &req); err == nil {
-		util.WriteResponse(w, http.StatusCreated, result)
+		if response == 200 {
+			util.WriteResponse(w, http.StatusCreated, result)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	} else {
-		util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		if response == 200 {
+			util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	}
 }
 
@@ -165,10 +176,20 @@ func (s *server) removeServiceInstance(w http.ResponseWriter, r *http.Request) {
 	acceptsIncomplete := q.Get("accepts_incomplete") == "true"
 	glog.Infof("RemoveServiceInstance %s...\n", instanceID)
 
+	response := ubroker.Options.Deprovision
+	glog.Warning("(ignore)removeServiceInstance operation, the fake status code is: ", response)
 	if result, err := s.controller.RemoveServiceInstance(instanceID, serviceID, planID, acceptsIncomplete); err == nil {
-		util.WriteResponse(w, http.StatusOK, result)
+		if response == 200 {
+			util.WriteResponse(w, http.StatusOK, result)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	} else {
-		util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		if response == 200 {
+			util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	}
 }
 
@@ -196,10 +217,21 @@ func (s *server) bind(w http.ResponseWriter, r *http.Request) {
 	// Pass in the instanceId to the template.
 	req.Parameters["instanceId"] = instanceID
 
+	response := ubroker.Options.Bind
+	glog.Warning("(ignore)bind operation, the fake status code is: ", response)
+
 	if result, err := s.controller.Bind(instanceID, bindingID, &req); err == nil {
-		util.WriteResponse(w, http.StatusOK, result)
+		if response == 200 {
+			util.WriteResponse(w, http.StatusOK, result)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	} else {
-		util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		if response == 200 {
+			util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		} else {
+			util.WriteResponse(w, response, result)
+		}
 	}
 }
 
@@ -211,11 +243,22 @@ func (s *server) unBind(w http.ResponseWriter, r *http.Request) {
 	planID := q.Get("plan_id")
 	glog.Infof("UnBind: Service instance guid: %s:%s", bindingID, instanceID)
 
+	response := ubroker.Options.Unbind
+	glog.Warning("(ignore)Unbind operation, the fake status code is: ", response)
+
 	if err := s.controller.UnBind(instanceID, bindingID, serviceID, planID); err == nil {
-		w.WriteHeader(http.StatusOK)
+		if response == 200 {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(response)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, "{}") //id)
 	} else {
-		util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		if response == 200 {
+			util.WriteErrorResponse(w, http.StatusBadRequest, err)
+		} else {
+			util.WriteErrorResponse(w, response, err)
+		}
 	}
 }

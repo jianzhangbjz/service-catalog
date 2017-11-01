@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM BASEIMAGE
+#FROM BASEIMAGE
+FROM gcr.io/google-containers/debian-base-amd64:0.2
 
 ADD user-broker /opt/services/user-broker
 
